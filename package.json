@@ -1,0 +1,21 @@
+{
+  "name": "mark-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Slack agent backend driven by agent-company.md (Pripravi.si)",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.60.0",
+    "@slack/bolt": "^4.2.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

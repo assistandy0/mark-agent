@@ -1,0 +1,11 @@
+services:
+  mark-agent:
+    build: .
+    container_name: mark-agent
+    restart: unless-stopped
+    env_file: .env
+    # agent-company.md je priklopljen z gostitelja → urejaš ga brez rebuilda
+    volumes:
+      - ./agent-company.md:/app/agent-company.md:ro
+    ports:
+      - "127.0.0.1:3020:3000"
