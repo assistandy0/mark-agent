@@ -43,9 +43,9 @@ function systemPromptFor(agentName) {
 }
 
 // ---------- Pomožne funkcije ----------
-async function threadHistory(client, channel, threadTs, botUserId) {
+async function threadHistory(client, channel, threadTs, botUserId, skipTs) {
   const res = await client.conversations.replies({ channel, ts: threadTs, limit: THREAD_LIMIT });
-  const msgs = (res.messages ?? []).filter((m) => m.text && !m.subtype);
+  const msgs = (res.messages ?? []).filter((m) => m.text && !m.subtype && m.ts !== skipTs);
   const out = [];
   for (const m of msgs) {
     const isBot = m.user === botUserId || m.bot_id;
@@ -59,6 +59,7 @@ async function threadHistory(client, channel, threadTs, botUserId) {
   }
   // prvo sporočilo mora biti od uporabnika
   while (out.length && out[0].role !== "user") out.shift();
+  while (out.length && out[out.length - 1].role !== "user") out.pop();
   return out;
 }
 
@@ -75,7 +76,7 @@ async function runAgent({ agent, client, event, botUserId, logger }) {
 
   try {
     // 2) kontekst niti
-    const messages = await threadHistory(client, channel, threadTs, botUserId);
+    const messages = await threadHistory(client, channel, threadTs, botUserId, working.ts);
     if (!messages.length) {
       messages.push({ role: "user", content: event.text.replace(new RegExp(`<@${botUserId}>`, "g"), "").trim() });
     }
