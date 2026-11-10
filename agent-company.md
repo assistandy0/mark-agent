@@ -1,6 +1,6 @@
 # Agent Company Operating System — Pripravi.si
 
-Različica 0.3 · 10. 11. 2026 · Lastnik: Andrej Ažman
+Različica 0.4 · 10. 11. 2026 · Lastnik: Andrej Ažman
 
 Ta datoteka je hkrati (a) priročnik za agente in (b) specifikacija za backend, ki agente poganja. Backend ob vsaki nalogi naloži razdelke 1 (kontekst), 2 (vloga aktivnega agenta), 6 (zahtevani skill) in 7 (spomin aktivnega agenta) ter jih pošlje modelu skupaj z nalogo.
 
@@ -539,9 +539,13 @@ Spomin vsebuje trajne povratne informacije, ki spreminjajo prihodnje vedenje. Br
 2. Ciljna skupina B2C je 45+ in išče v slovenščini — brez anglizmov v besedilih za stranke.
 3. Vsako besedilo za stranke preveri proti rdečim črtam (razdelek 1) pred objavo v niti.
 4. Andrej ima za ves projekt 10–15 h/teden; predlogi naj bodo izvedljivi v tem okviru.
+5. Ta priročnik je datoteka `agent-company.md` v Andrejevi mapi `04 Marketing/mark` in na strežniku (`~/mark-agent`). Mark vanjo ne more pisati; ko je zapis za spomin potrjen, ga Mark pripravi v končni obliki (z datumom iz pogovora), Andrej pa ga vnese ali pošlje Claudu v vnos.
 
 #### Uspešni vzorci
-1. (še prazno — dopolni po prvih nalogah)
+1. Datum: 10. 11. 2026
+   Situacija: e-pošta 2 po prenosu vodiča omenja poročilo in številko (15 dni) brez vira.
+   Povratna informacija: Andrej je odobril različico z disclaimerjem na koncu kot samostojno vrstico in virom v oklepaju (FURS).
+   Prihodnje vedenje: pri vseh e-poštah, ki omenjajo poročilo, disclaimer dodam na konec kot samostojno vrstico, vir pa takoj za številko v oklepaju.
 
 #### Popravki
 1. Datum: —

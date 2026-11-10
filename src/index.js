@@ -18,9 +18,11 @@ const AGENTS = [
 
 const SPEC_PATH = process.env.AGENT_COMPANY_PATH ?? "./agent-company.md";
 const MODEL = process.env.AI_MODEL ?? "claude-sonnet-5-5";
-const MAX_TOKENS = Number(process.env.AI_MAX_TOKENS ?? 4000);
+const MAX_TOKENS = Number(process.env.AI_MAX_TOKENS ?? 8000);
 const THREAD_LIMIT = Number(process.env.THREAD_CONTEXT_LIMIT ?? 30);
 const PORT = Number(process.env.PORT ?? 3000);
+// Kanali, v katerih agent odgovarja na VSAKO sporočilo (brez @omembe). Seznam ID-jev kanalov, ločenih z vejico.
+const AUTO_REPLY_CHANNELS = (process.env.AUTO_REPLY_CHANNELS ?? "").split(",").map((c) => c.trim()).filter(Boolean);
 
 for (const a of AGENTS) {
   for (const k of ["botToken", "signingSecret"]) {
@@ -57,7 +59,7 @@ async function threadHistory(client, channel, threadTs, botUserId, skipTs) {
     if (prev && prev.role === role) prev.content += "\n\n" + text;
     else out.push({ role, content: text });
   }
-  // prvo sporočilo mora biti od uporabnika
+  // prvo in zadnje sporočilo morata biti od uporabnika (zahteva Anthropic API)
   while (out.length && out[0].role !== "user") out.shift();
   while (out.length && out[out.length - 1].role !== "user") out.pop();
   return out;
@@ -81,18 +83,21 @@ async function runAgent({ agent, client, event, botUserId, logger }) {
       messages.push({ role: "user", content: event.text.replace(new RegExp(`<@${botUserId}>`, "g"), "").trim() });
     }
 
-    // 3) klic modela
-    const response = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: systemPromptFor(agent.name),
-      messages,
-    });
-    const text = response.content
-      .filter((b) => b.type === "text")
-      .map((b) => b.text)
-      .join("\n")
-      .trim() || "Blokirano – model ni vrnil besedila.";
+    // 3) klic modela (ob praznem odgovoru en ponovni poskus)
+    const system = systemPromptFor(agent.name);
+    let response, text = "";
+    for (let attempt = 1; attempt <= 2 && !text; attempt++) {
+      response = await anthropic.messages.create({ model: MODEL, max_tokens: MAX_TOKENS, system, messages });
+      text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
+      if (!text) {
+        logger.warn(`[${agent.name}] prazen odgovor (poskus ${attempt}): stop_reason=${response.stop_reason}, bloki=${response.content.map((b) => b.type).join(",") || "nič"}`);
+      }
+    }
+    if (!text) {
+      text = `Blokirano – model ni vrnil besedila (stop_reason: ${response?.stop_reason ?? "?"}). Poskusi vprašanje ponoviti ali ga preoblikovati.`;
+    } else if (response.stop_reason === "max_tokens") {
+      text += "\n\n_(Odgovor je bil odrezan zaradi dolžine — napiši »nadaljuj«.)_";
+    }
 
     // 4) odgovor v isto nit; "V delu" sporočilo nadomestimo
     await client.chat.update({ channel, ts: working.ts, text: toSlackMrkdwn(text) });
@@ -134,8 +139,13 @@ for (const agent of AGENTS) {
     await runAgent({ agent, client, event, botUserId, logger });
   });
   app.event("message", async ({ event, client, logger }) => {
-    if (event.channel_type !== "im" || event.subtype || event.bot_id) return;
+    if (event.subtype || event.bot_id) return;
+    const isDm = event.channel_type === "im";
+    const isAutoChannel = AUTO_REPLY_CHANNELS.includes(event.channel);
+    if (!isDm && !isAutoChannel) return;
     botUserId ??= (await client.auth.test()).user_id;
+    // v kanalu z omembo poskrbi app_mention; tu preskočimo, da ne odgovori dvakrat
+    if (isAutoChannel && event.text?.includes(`<@${botUserId}>`)) return;
     await runAgent({ agent, client, event, botUserId, logger });
   });
   app.error(async (e) => console.error(`[${agent.name}]`, e));
