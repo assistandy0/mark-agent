@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 export function loadSpec(path) {
   const text = readFileSync(path, "utf8");
   const sections = {};
-  const re = /^## (\d+)\.\s+([^\n]+)\n([\s\S]*?)(?=^## \d+\.\s|\Z)/gm;
+  const re = /^## (\d+)\.\s+([^\n]+)\n([\s\S]*?)(?=^## \d+\.\s|(?![\s\S]))/gm;
   let m;
   while ((m = re.exec(text + "\n")) !== null) {
     sections[m[1]] = { title: m[2].trim(), body: m[3].trim() };
