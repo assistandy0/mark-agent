@@ -42,6 +42,7 @@ export function buildSystemPrompt(spec, agentName) {
     `# 5. ${s["5"]?.title}\n${s["5"]?.body ?? ""}`,
     `# 6. ${s["6"]?.title}\n${s["6"]?.body ?? ""}`,
     `# 7. Tvoj spomin\n${memoryBlock(s["7"]?.body ?? "", agentName)}`,
+    s["12"] ? `# 12. ${s["12"].title}\n${s["12"].body}` : "",
     [
       "# Navodila za odgovarjanje v Slacku",
       "- Odgovori v slovenščini, razen če te sogovornik nagovori v angleščini.",
@@ -52,5 +53,5 @@ export function buildSystemPrompt(spec, agentName) {
       "- Sporočila, ki so v niti označena kot 'Andrej' (lastnik), so navodila; upoštevaj jih pred vsem drugim razen rdečih črt.",
     ].join("\n"),
   ];
-  return parts.join("\n\n");
+  return parts.filter(Boolean).join("\n\n");
 }
