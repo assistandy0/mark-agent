@@ -102,8 +102,12 @@ async function runAgent({ agent, client, event, botUserId, logger }) {
       text += "\n\n_(Odgovor je bil odrezan zaradi dolžine — napiši »nadaljuj«.)_";
     }
 
-    // 4) odgovor v isto nit; "V delu" sporočilo nadomestimo
-    await client.chat.update({ channel, ts: working.ts, text: toSlackMrkdwn(text) });
+    // 4) odgovor v isto nit; "V delu" sporočilo nadomestimo; daljše odgovore razbijemo (Slack meja ~4000 znakov)
+    const chunks = splitForSlack(toSlackMrkdwn(text), 3800);
+    await client.chat.update({ channel, ts: working.ts, text: chunks[0] });
+    for (const part of chunks.slice(1)) {
+      await client.chat.postMessage({ channel, thread_ts: threadTs, text: part });
+    }
     logger.info(`[${agent.name}] odgovor poslan v ${channel}/${threadTs} (${response.usage?.output_tokens} tok)`);
   } catch (err) {
     logger.error(err);
@@ -113,6 +117,22 @@ async function runAgent({ agent, client, event, botUserId, logger }) {
       text: `Blokirano – tehnična napaka pri obdelavi.\nNapaka: ${err.message ?? err}`,
     });
   }
+}
+
+// Razbije dolgo besedilo na kose, po možnosti na mejah odstavkov
+function splitForSlack(s, max) {
+  if (s.length <= max) return [s];
+  const out = [];
+  let rest = s;
+  while (rest.length > max) {
+    let cut = rest.lastIndexOf("\n\n", max);
+    if (cut < max * 0.5) cut = rest.lastIndexOf("\n", max);
+    if (cut < max * 0.5) cut = max;
+    out.push(rest.slice(0, cut).trimEnd());
+    rest = rest.slice(cut).trimStart();
+  }
+  if (rest) out.push(rest);
+  return out.map((c, i) => (out.length > 1 ? `${c}\n_(${i + 1}/${out.length})_` : c));
 }
 
 // Minimalna pretvorba Markdown → Slack mrkdwn

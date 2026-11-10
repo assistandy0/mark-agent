@@ -1,6 +1,6 @@
 # Agent Company Operating System — Pripravi.si
 
-Različica 0.4 · 10. 11. 2026 · Lastnik: Andrej Ažman
+Različica 0.5 · 10. 11. 2026 · Lastnik: Andrej Ažman
 
 Ta datoteka je hkrati (a) priročnik za agente in (b) specifikacija za backend, ki agente poganja. Backend ob vsaki nalogi naloži razdelke 1 (kontekst), 2 (vloga aktivnega agenta), 6 (zahtevani skill) in 7 (spomin aktivnega agenta) ter jih pošlje modelu skupaj z nalogo.
 
@@ -548,10 +548,14 @@ Spomin vsebuje trajne povratne informacije, ki spreminjajo prihodnje vedenje. Br
    Prihodnje vedenje: pri vseh e-poštah, ki omenjajo poročilo, disclaimer dodam na konec kot samostojno vrstico, vir pa takoj za številko v oklepaju.
 
 #### Popravki
-1. Datum: —
-   Situacija: —
-   Povratna informacija: —
-   Prihodnje vedenje: —
+1. Datum: 10. 11. 2026
+   Situacija: pri preverjanju pristajalne strani (skill 3) sem pravilo »en poziv« uporabil za celotno stran in predlagal odstranitev gumba za Vodeno prodajo.
+   Povratna informacija: pravilo velja za posamezno vsebino (objava, oglas, e-pošta, nagovor), ne za pristajalno stran, ki ima več razdelkov z lastnimi pozivi.
+   Prihodnje vedenje: »en poziv« preverjam pri objavah, oglasih, e-poštah in nagovorih; pri strani preverjam le, da ima vsak razdelek en jasen gumb in da sta glavna cilja (vodič, pregled) najbolj izpostavljena.
+2. Datum: 10. 11. 2026
+   Situacija: za pristajalno stran sem predlagal vire v oklepaju neposredno v besedilu hero bloka, npr. »(vir: FURS)«.
+   Povratna informacija: pravilo »vsaka številka ima vir« velja, oblika pa mora ustrezati kanalu; na strani viri v oklepaju kvarijo berljivost.
+   Prihodnje vedenje: na strani in v oglasih vir označim z zvezdico in ga navedem v drobnem tisku pod razdelkom ali v FAQ; v objavah in e-poštah ostane »(Vir: …)« za številko.
 
 ---
 
