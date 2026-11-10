@@ -18,10 +18,10 @@ const AGENTS = [
 
 const SPEC_PATH = process.env.AGENT_COMPANY_PATH ?? "./agent-company.md";
 const MODEL = process.env.AI_MODEL ?? "claude-sonnet-5-5";
-const MAX_TOKENS = Number(process.env.AI_MAX_TOKENS ?? 8000);
-// Omejen proračun za razmišljanje; brez omejitve model lahko porabi vse žetone za thinking in ne vrne besedila.
-const THINKING_BUDGET = Number(process.env.AI_THINKING_BUDGET ?? 2000);
-const thinkingParam = THINKING_BUDGET > 0 ? { thinking: { type: "enabled", budget_tokens: THINKING_BUDGET } } : { thinking: { type: "disabled" } };
+const MAX_TOKENS = Number(process.env.AI_MAX_TOKENS ?? 12000);
+// Razmišljanje: adaptivno, z nastavljivim naporom (low | medium | high). Pri "high" je model prej porabil ves proračun za razmišljanje.
+const AI_EFFORT = process.env.AI_EFFORT ?? "medium";
+const thinkingParam = { thinking: { type: "adaptive" }, output_config: { effort: AI_EFFORT } };
 const THREAD_LIMIT = Number(process.env.THREAD_CONTEXT_LIMIT ?? 30);
 const PORT = Number(process.env.PORT ?? 3000);
 // Kanali, v katerih agent odgovarja na VSAKO sporočilo (brez @omembe). Seznam ID-jev kanalov, ločenih z vejico.
@@ -90,7 +90,7 @@ async function runAgent({ agent, client, event, botUserId, logger }) {
     const system = systemPromptFor(agent.name);
     let response, text = "";
     for (let attempt = 1; attempt <= 2 && !text; attempt++) {
-      response = await anthropic.messages.create({ model: MODEL, max_tokens: MAX_TOKENS + THINKING_BUDGET, system, messages, ...thinkingParam });
+      response = await anthropic.messages.create({ model: MODEL, max_tokens: MAX_TOKENS, system, messages, ...thinkingParam });
       text = response.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
       if (!text) {
         logger.warn(`[${agent.name}] prazen odgovor (poskus ${attempt}): stop_reason=${response.stop_reason}, bloki=${response.content.map((b) => b.type).join(",") || "nič"}`);
